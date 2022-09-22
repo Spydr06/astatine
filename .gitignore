@@ -12,5 +12,10 @@ bin/
 vgcore.*
 
 # editor files
-.vscode/
+.cache/
 #*
+compile_commands.json
+
+# build directories
+build/
+builddir/
