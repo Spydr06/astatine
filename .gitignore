@@ -1,0 +1,16 @@
+# binary files
+bin/
+*.o
+*.out
+*.a
+*.exe
+*.dll
+*.lib
+
+# debugger logs
+*.log
+vgcore.*
+
+# editor files
+.vscode/
+#*
