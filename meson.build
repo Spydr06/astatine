@@ -20,3 +20,4 @@ build_args = [
 
 subdir('src/libastatine')
 subdir('src/astatc')
+subdir('tests')

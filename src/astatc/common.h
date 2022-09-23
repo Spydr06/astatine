@@ -13,4 +13,4 @@
 
 #define OR(a, b) ((a) ? (a) : (b))
 
-#endif
+#endif /* ASTATC_COMMON_H */
