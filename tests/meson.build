@@ -4,7 +4,6 @@ project_test_files = [
     'unit_tests.cpp'
 ]
 
-
 if not meson.is_subproject()    
 
     gtest_dir = 'googletest/googletest'

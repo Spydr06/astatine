@@ -2,7 +2,7 @@
     ASTATC - THE ASTATINE PROGRAMMING LANGUAGE COMPILER
     This is the main file and entry point to the compiler.
 
-    This compiler and all components of Astatine, except external dependencies (acutest, json-c), are licensed under the MIT license.
+    This compiler and all components of Astatine, except external dependencies, are licensed under the MIT license.
 
     Creator:
         https://github.com/spydr06
@@ -162,9 +162,9 @@ static void show_usage(void)
 }
 
 int main(int argc, const char* argv[]) {
-    argv++; // skip compiler exec
+    const char* application = *(argv++); // skip compiler exec
 
-    int err = parse_flags(flags, LEN(flags), argc - 1, argv, on_unknown_flag);
+    int32_t err = parse_flags(flags, LEN(flags), argc - 1, argv, on_unknown_flag);
     if(err >= 0)
     {
         fprintf(stderr, ERROR_FMT("Unknown command line flag `%s`."), argv[err]);
@@ -180,5 +180,23 @@ int main(int argc, const char* argv[]) {
 
     printf("// Compiling `%s`\n", src_file);
 
+    AstatineContext_T* context = astatine_initialize(application);
+    if(!context)
+    {
+        fprintf(stderr, ERROR_FMT(
+            "Failed to initialize astatine compiler runtime context.\n"
+            "Check and update your installation and report an issue if this error persists"
+        ));
+        exit(2);
+    }
+
+    astatine_register_pass(context, astatine_lexer_pass);
+    err = astatine_execute_passes(context);
+    if(err)
+    {
+        // TODO: error handling
+    }
+
+    astatine_deinitialize(context);
     return 0;
 }

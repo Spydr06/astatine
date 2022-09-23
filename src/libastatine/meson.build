@@ -1,15 +1,19 @@
 libastatine_description = 'Astatine compiler library'
 
 libastatine_public_include_dirs = [
-    'include/'
+    'include'
 ]
 
 libastatine_public_headers = [
-    libastatine_public_include_dirs[0] + 'astatine.h'
+    join_paths(libastatine_public_include_dirs[0], 'astatine.h')
 ]
 
 libastatine_source_files = [
-    'astatine.c'
+    'astatine.c',
+    'context.c',
+    'version.c',
+    'list.c',
+    join_paths('lexer', 'lexer.c'),
 ]
 
 libastatine_target = library(
