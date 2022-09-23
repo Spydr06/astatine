@@ -9,9 +9,13 @@ project(
     ]
 )
 
+commit_cmd = run_command('git', 'describe', '--always', '--dirty', check : true)
+commit_id = commit_cmd.stdout().strip()
+
 build_args = [
-    '-DPROJECT_NAME=' + meson.project_name(),
-    '-DPROJECT_VERSION=' + meson.project_version(),
+    '-DPROJECT_NAME="' + meson.project_name() + '"',
+    '-DPROJECT_VERSION="' + meson.project_version() + '"',
+    '-DPROJECT_BUILD="' + commit_id + '"',
 ]
 
 subdir('src/libastatine')

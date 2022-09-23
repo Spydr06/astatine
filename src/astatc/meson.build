@@ -4,7 +4,8 @@
 #)
 
 astatc_source_files = [
-    'main.c'
+    'main.c',
+    'flags.c'
 ]
 
 astatc_dependencies = [
