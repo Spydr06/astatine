@@ -1,0 +1,31 @@
+{
+    "name": "astatine-language-support",
+    "displayName": "Astatine Syntax Highlighting",
+    "description": "Adds syntax highlighting support for the Astatine programming language",
+    "license": "MIT",
+    "version": "0.0.1",
+    "publisher": "Spydr06",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Spydr06/astatine"
+    },
+    "engines": {
+        "vscode": "^1.56.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "astatine",
+            "aliases": ["Astatine", "astatine"],
+            "extensions": [".at"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "astatine",
+            "scopeName": "source.at",
+            "path": "./syntaxes/astatine.tmLanguage.json"
+        }]
+    }
+}

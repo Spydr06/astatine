@@ -1,0 +1,37 @@
+{
+    "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+    "name": "Astatine",
+    "fileTypes": [
+        "astatine"
+    ],
+    "patterns": [
+        {
+			"include": "#comment"
+		}
+    ],
+    "repository": {
+        "comment": {
+            "patterns": [
+                {
+                    "name": "comment.block.astatine",
+                    "begin": "\\[-",
+                    "end": "-\\]",
+                    "patterns": [{
+                        "name": "punctuation.definition.comment.astatine",
+                        "match": "\\\\."
+                    }]
+                },
+                {
+                    "name": "comment.line.astatine",
+                    "match": "(--).*$\\n?",
+                    "captures": {
+                        "1": {
+                            "name": "punctuation.definition.comment.astatine"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "scopeName": "source.at"
+}
