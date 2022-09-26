@@ -136,7 +136,13 @@ static Token_T* lexer_get_int(Lexer_T* lexer, int32_t base)
     lexer_advance(lexer); // skip `0`
     lexer_advance(lexer); // skip `x` `o` or `b`
 
-    for(; lexer->c >= '0' && lexer->c < '0' + base;) lexer_advance(lexer);
+    while(
+        (lexer->c >= '0' && lexer->c <= '9') || 
+        (base > 10 
+            ? toupper(lexer->c) >= 'A' && toupper(lexer->c) < 'A' + base - 10 
+            : false
+        )
+    ) lexer_advance(lexer);
     if(isalnum(lexer->c))
         return token_init(lexer->module, TOKEN_ERROR, lexer->line, start_pos, lexer->pos - start_pos, &lexer->source[start_pos]);
 

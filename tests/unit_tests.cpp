@@ -1,5 +1,8 @@
-#include <astatine.h>
 #include <gtest/gtest.h>
+
+extern "C" {
+    #include <astatine.h>
+}
 
 TEST(LibAstatine, test_testing)
 {

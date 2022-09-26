@@ -1,7 +1,8 @@
 # Builds google test as a dependency called "test_dep".
 
 project_test_files = [
-    'unit_tests.cpp'
+    'unit_tests.cpp',
+    join_paths('internals', 'lexer.cpp')
 ]
 
 if not meson.is_subproject()    
@@ -19,9 +20,14 @@ if not meson.is_subproject()
         ]
     )
 
+    libastatine_incdir = join_paths('..', 'src', 'libastatine')
+
     test_dep = declare_dependency(
         dependencies : dependency('threads'),
-        include_directories : gtest_incdir,
+        include_directories : [
+            gtest_incdir,
+            libastatine_incdir,
+        ],
         link_with : libgtest
     )
 
