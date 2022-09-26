@@ -27,7 +27,7 @@
 
 ### Compiler Features:
 
-- [ ] lexing tokens
+- [x] lexing tokens
 - [ ] parsing an AST
 - [ ] semantical analysis
 - [ ] type checking
