@@ -12,8 +12,12 @@ libastatine_source_files = [
     'astatine.c',
     'context.c',
     'version.c',
-    'list.c',
     join_paths('lexer', 'lexer.c'),
+    join_paths('lexer', 'token.c'),
+    join_paths('memory', 'arena.c'),
+    join_paths('memory', 'list.c'),
+    join_paths('memory', 'hashmap.c'),
+    join_paths('ast', 'module.c'),
 ]
 
 libastatine_target = library(

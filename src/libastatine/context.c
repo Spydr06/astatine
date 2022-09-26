@@ -1,78 +1,55 @@
 #include "context.h"
-#include "list.h"
+#include "ast/module.h"
+#include "memory/arena.h"
+#include "memory/hashmap.h"
 #include "passes.h"
+#include "lexer/lexer.h"
 
 #include <errno.h>
 #include <stdlib.h>
 #include <memory.h>
+#include <stdio.h>
 
 Context_T* astatine_initialize(const char* application)
 {
     Context_T* context = calloc(1, sizeof(Context_T));
 
     context->application = application;
-    context->passes = init_list();
+    context->modules = hashmap_init();
 
     return context;
 }
 
 void astatine_deinitialize(Context_T* context)
 {
-    free_list(context->passes);
+    List_T* modules = hashmap_values(context->modules);
+    for(size_t i = 0; i < modules->size; i++)
+        free_module(modules->items[i]);
+    free_list(modules);
+    hashmap_free(context->modules);
     free(context);
 }
 
-void astatine_register_pass(Context_T* context, PassFn_T pass)
+int32_t astatine_compile_module(Context_T* context, const char* source, const char* origin)
 {
-    if(list_contains(context->passes, (void*) pass))
-        return; // pass is already in the list
-
-    list_push(context->passes, (void*) pass);
-}
-
-size_t astatine_get_num_passes(AstatineContext_T* context)
-{
-    if(!context || !context->passes)
-    {
-        errno = EINVAL;
-        return 0;
-    }
-
-    return context->passes->size;
-}
-
-void astatine_get_passes(Context_T* context, PassFn_T buffer[])
-{
-    if(!context || !context->passes)
-    {
-        errno = EINVAL;
-        return;
-    }
-
-    memcpy(buffer, context->passes->items, sizeof(PassFn_T) * context->passes->size);
-}
-
-int32_t astatine_execute_passes(AstatineContext_T* context)
-{
-    if(!context)
+    if(!context || !source)
     {
         errno = EINVAL;
         return -1;
     }
 
-    try(context->error_exception)
-    {
-        for(size_t i = 0; i < context->passes->size; i++)
-        {
-            PassFn_T fn = (PassFn_T) context->passes->items[i];
-            int32_t error = fn(context);
-            if(error)
-                throw(context->error_exception);
-        }
-    }
-    catch {
-        // TODO: error handling
+    printf("%s:\n%s\n", origin, source);
+
+    Module_T* module = init_module("<placeholder>", origin);
+
+    Lexer_T lexer = {0};
+    init_lexer(&lexer, module, source);
+
+    Token_T* tok = NULL;
+    while((tok = lexer_next_token(&lexer)) && tok->kind != TOKEN_EOF) {
+        debug_print_token(tok);
     }
 
+    hashmap_put(context->modules, (char*) module->name, module);
     return 0;
 }

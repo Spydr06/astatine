@@ -57,20 +57,8 @@ extern const char* astatine_build(void);
 // initializes the compiler runtime context
 extern AstatineContext_T* astatine_initialize(const char* application);
 
-// passes:
-int32_t astatine_lexer_pass(AstatineContext_T* context);
-
-// add a compiler pass to the compiler
-extern void astatine_register_pass(AstatineContext_T* context, AstatinePassFn_T pass);
-
-// get the number of registered compiler passes
-extern size_t astatine_get_num_passes(AstatineContext_T* context);
-
-// output the compiler passes into a buffer
-extern void astatine_get_passes(AstatineContext_T* context, AstatinePassFn_T buffer[]);
-
-// execute all registered compiler passes
-extern int32_t astatine_execute_passes(AstatineContext_T* context);
+// parse an astatine module
+extern int32_t astatine_compile_module(AstatineContext_T* context, const char* source, const char* origin);
 
 // deinitializes the compiler runtime context
 extern void astatine_deinitialize(AstatineContext_T* context);

@@ -14,8 +14,8 @@
             "patterns": [
                 {
                     "name": "comment.block.astatine",
-                    "begin": "\\[-",
-                    "end": "-\\]",
+                    "begin": "-\\[",
+                    "end": "\\]-",
                     "patterns": [{
                         "name": "punctuation.definition.comment.astatine",
                         "match": "\\\\."

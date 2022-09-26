@@ -4,6 +4,6 @@ import * from IO
 -- prints 'Hello, World' to stdout
 main :: (args [String]) -> Int32
     = do
-        IO::puts('Hello, World')
+        IO::puts("Hello, World")
         0
     end

@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 
 #include "common.h"
 #include "flags.h"
@@ -161,6 +162,49 @@ static void show_usage(void)
     fprintf(stdout, usage_text);
 }
 
+static int64_t fsize(FILE* fp) {
+    fseek(fp, 0, SEEK_END);
+    int64_t size = ftell(fp);
+    rewind(fp);
+    return size;
+}
+
+static int32_t compile_file(const char* application, const char* filename)
+{
+    AstatineContext_T* context = astatine_initialize(application);
+    if(!context)
+    {
+        fprintf(stderr, ERROR_FMT(
+            "Failed to initialize astatine compiler runtime context.\n"
+            "Check and update your installation and report an issue if this error persists"
+        ));
+        return 2;
+    }
+
+    FILE* fp = fopen(filename, "rb");
+    if(!fp)
+    {
+        fprintf(stderr, ERROR_FMT(
+            "Error reading file `%s`: %s."
+        ), filename, strerror(errno));
+
+        return 1;
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t filesize = fsize(fp);
+
+    char buffer[filesize + 1];
+    fread(buffer, filesize, 1, fp);
+    fclose(fp);
+
+    buffer[filesize] = '\0';
+
+    int32_t output = astatine_compile_module(context, buffer, filename);
+
+    astatine_deinitialize(context);
+    return output;
+}
+
 int main(int argc, const char* argv[]) {
     const char* application = *(argv++); // skip compiler exec
 
@@ -178,25 +222,5 @@ int main(int argc, const char* argv[]) {
         return 1;
     }
 
-    printf("// Compiling `%s`\n", src_file);
-
-    AstatineContext_T* context = astatine_initialize(application);
-    if(!context)
-    {
-        fprintf(stderr, ERROR_FMT(
-            "Failed to initialize astatine compiler runtime context.\n"
-            "Check and update your installation and report an issue if this error persists"
-        ));
-        exit(2);
-    }
-
-    astatine_register_pass(context, astatine_lexer_pass);
-    err = astatine_execute_passes(context);
-    if(err)
-    {
-        // TODO: error handling
-    }
-
-    astatine_deinitialize(context);
-    return 0;
+    return compile_file(application, src_file);
 }
