@@ -63,6 +63,15 @@ void* list_pop(List_T* list)
     return list->size ? list->items[--list->size] : NULL;
 }
 
+void* list_drop(List_T* list)
+{
+    void* lowest = list->items[0];
+    for(size_t i = 1; i < list->size; i++)
+        list->items[i - 1] = list->items[i];
+    list_pop(list);
+    return lowest;
+}
+
 void free_list(List_T* list)
 {
     free(list->items);

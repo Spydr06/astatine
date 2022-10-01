@@ -34,7 +34,8 @@ static const char* KEYWORDS[TOKEN_EOF + 1] = {
     [TOKEN_KEYW_IMPORT] = "import",
     [TOKEN_KEYW_FROM] = "from",
     [TOKEN_KEYW_DO] = "do",
-    [TOKEN_KEYW_END] = "end"    
+    [TOKEN_KEYW_END] = "end",
+    [TOKEN_KEYW_FOREIGN] = "foreign",
 };
 
 void init_lexer(Lexer_T* lexer, Module_T* module, const char* source)

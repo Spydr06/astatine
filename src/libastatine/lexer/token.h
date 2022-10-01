@@ -32,12 +32,13 @@ typedef enum TOKEN_KIND {
     TOKEN_LBRACKET, // [
     TOKEN_RBRACKET, // ]
 
-    TOKEN_KEYW_MODULE, // module
-    TOKEN_KEYW_WHERE,  // where
-    TOKEN_KEYW_IMPORT, // import
-    TOKEN_KEYW_FROM,   // from
-    TOKEN_KEYW_DO,     // do
-    TOKEN_KEYW_END,    // end
+    TOKEN_KEYW_MODULE,  // module
+    TOKEN_KEYW_WHERE,   // where
+    TOKEN_KEYW_IMPORT,  // import
+    TOKEN_KEYW_FROM,    // from
+    TOKEN_KEYW_DO,      // do
+    TOKEN_KEYW_END,     // end
+    TOKEN_KEYW_FOREIGN, // foreign
 
     TOKEN_UNKNOWN, // unknown token
     TOKEN_ERROR,   // error token
@@ -52,6 +53,6 @@ typedef struct TOKEN_STRUCT {
 } Token_T;
 
 Token_T* token_init(Module_T* module, TokenKind_T kind, uint32_t line, uint64_t position, uint64_t length, const char* value);
-void debug_print_token(Token_T* token);
+void pretty_print_token(Token_T* token);
 
 #endif /* ASTATINE_TOKEN_H */

@@ -1,9 +1,11 @@
 #include "context.h"
+#include "ast/debug.h"
 #include "ast/module.h"
 #include "memory/arena.h"
 #include "memory/hashmap.h"
 #include "passes.h"
 #include "lexer/lexer.h"
+#include "parser/parser.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -45,10 +47,12 @@ int32_t astatine_compile_module(Context_T* context, const char* source, const ch
     Lexer_T lexer = {0};
     init_lexer(&lexer, module, source);
 
-    Token_T* tok = NULL;
-    while((tok = lexer_next_token(&lexer)) && tok->kind != TOKEN_EOF) {
-        debug_print_token(tok);
-    }
+    Parser_T parser = {0};
+    init_parser(&parser, module, &lexer);
+    parse_module(&parser);
+    free_parser(&parser);
+
+    pretty_print_module(module);
 
     hashmap_put(context->modules, (char*) module->name, module);
     return 0;

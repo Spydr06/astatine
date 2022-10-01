@@ -14,10 +14,14 @@ libastatine_source_files = [
     'version.c',
     join_paths('lexer', 'lexer.c'),
     join_paths('lexer', 'token.c'),
+    join_paths('parser', 'parser.c'),
     join_paths('memory', 'arena.c'),
     join_paths('memory', 'list.c'),
     join_paths('memory', 'hashmap.c'),
     join_paths('ast', 'module.c'),
+    join_paths('ast', 'node.c'),
+    join_paths('ast', 'debug.c'),
+    join_paths('ast', 'object.c'),
 ]
 
 libastatine_target = library(

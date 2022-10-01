@@ -43,13 +43,14 @@ static const char* token_kind_strings[] = {
     [TOKEN_KEYW_FROM]    = "KEYWORD FROM",
     [TOKEN_KEYW_DO]      = "KEYWORD DO",
     [TOKEN_KEYW_END]     = "KEYWORD END",
+    [TOKEN_KEYW_FOREIGN] = "KEYWORD FOREIGN",
     [TOKEN_UNKNOWN]      = "UNKNOWN",
     [TOKEN_ERROR]        = "ERROR",
     [TOKEN_EOF]          = "EOF",
 };
 
-void debug_print_token(Token_T* token)
+void pretty_print_token(Token_T* token)
 {
-    static const char* fmt = "Token { kind: %s,\tline: %u,\tposition: %lu,\tvalue: `%s`\t}\n";
+    static const char* fmt = "Token { kind: %s, line: %u, position: %lu, value: `%s`}\n";
     printf(fmt, token_kind_strings[token->kind], token->line, token->position, token->value);
 }
