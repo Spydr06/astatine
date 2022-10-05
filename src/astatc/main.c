@@ -39,6 +39,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <errno.h>
 
 #include "common.h"
@@ -46,11 +47,6 @@
 
 #define ASTATC_GIT_REPOSITORY "https://github.com/spydr06/astatine"
 #define ASTATC_GIT_DEVELOPER  "https://github.com/spydr06"
-
-// text that gets shown if a wrong 
-static const char usage_text[] = 
-    WHITE BOLD "Usage:" RESET " astatc <input file> <flags>\n"
-    "Use -h or --help for the help page.\n";
 
 // text that gets shown if -i or --info is used
 static const char info_text[] = 
@@ -119,6 +115,22 @@ static const Flag_T flags[] = {
 
 static const char* src_file = NULL;
 
+#ifdef __GNUC__
+__attribute((format(printf, 2, 3)))
+#endif /* __GNUC__ */
+static _Noreturn void fatal_error(const char* exec, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    fprintf(stderr, BOLD WHITE "%s: " RED "fatal error: " RESET, exec);
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    fflush(stderr);
+    
+    va_end(ap);
+    exit(EXIT_FAILURE);
+}
+
 static bool on_unknown_flag(const char** argv, size_t index)
 {
     if(src_file)
@@ -140,26 +152,21 @@ static void show_help(void)
 
     fprintf(stdout, help_end_text);
 
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 static void show_info(void)
 {
     fprintf(stdout, info_text, PROJECT_VERSION, PROJECT_BUILD);
 
-    exit(0);
+    exit(EXIT_SUCCESS);
 }
 
 static void show_version(void)
 {
     fprintf(stdout, version_text, PROJECT_VERSION, astatine_version(), PROJECT_BUILD);
 
-    exit(0);
-}
-
-static void show_usage(void)
-{
-    fprintf(stdout, usage_text);
+    exit(EXIT_SUCCESS);
 }
 
 static int64_t fsize(FILE* fp) {
@@ -174,22 +181,16 @@ static int32_t compile_file(const char* application, const char* filename)
     AstatineContext_T* context = astatine_initialize(application);
     if(!context)
     {
-        fprintf(stderr, ERROR_FMT(
+        fatal_error(application,
             "Failed to initialize astatine compiler runtime context.\n"
-            "Check and update your installation and report an issue if this error persists"
-        ));
-        return 2;
+            "Check and update your installation and report an issue if this error persists.\n"
+        );
     }
 
     FILE* fp = fopen(filename, "rb");
     if(!fp)
-    {
-        fprintf(stderr, ERROR_FMT(
-            "Error reading file `%s`: %s."
-        ), filename, strerror(errno));
-
-        return 1;
-    }
+        fatal_error(application, "Error reading file `%s`: %s.", filename, strerror(errno));
+    
     fseek(fp, 0, SEEK_END);
     size_t filesize = fsize(fp);
 
@@ -210,17 +211,10 @@ int main(int argc, const char* argv[]) {
 
     int32_t err = parse_flags(flags, LEN(flags), argc - 1, argv, on_unknown_flag);
     if(err >= 0)
-    {
-        fprintf(stderr, ERROR_FMT("Unknown command line flag `%s`."), argv[err]);
-        return 1;
-    }
+        fatal_error(application, "Unknown command line flag `%s`.", argv[err]);
 
     if(!src_file)
-    {
-        fprintf(stderr, ERROR_FMT("No source code file defined."));
-        show_usage();
-        return 1;
-    }
+        fatal_error(application, "No input file.");
 
     return compile_file(application, src_file);
 }
