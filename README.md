@@ -19,41 +19,9 @@
 
 </div>
 
-**Astatine** is a mid-level, statically typed, procedural programming language with some functional components.
+**Astatine** is a mid-level, statically typed, functional programming language.
 
 > This language is only starting to get developed, so most (if not all) features are not implemented.
-
-## Current State
-
-### Compiler Features:
-
-- [x] lexing tokens
-- [ ] parsing an AST
-- [ ] semantical analysis
-- [ ] type checking
-- [ ] borrow checker
-- [ ] CLI & error handling
-- [ ] language server
-- [ ] ...
-
-### Language Features:
-
-- [ ] first-class functions & methods
-- [ ] records
-- [ ] control flow
-- [ ] pattern matching
-- [ ] macros
-- [ ] templates
-- [ ] ...
-
-### Standard Library Features:
-
-- [ ] `c99` `libc`-header implementation
-- [ ] file IO
-- [ ] regular expressions
-- [ ] math library
-- [ ] concurrency
-- [ ] ...
 
 ## Installation
 
@@ -65,7 +33,7 @@ Please refer to [INSTALL.md](./INSTALL.md) for installation instructions and inf
 
 ## Editor support
 
-Editor support is found in the **[editors/](./editors)** subdirectory.
+> TODO!
 
 ## Contributing
 
@@ -75,7 +43,7 @@ View [CONTRIBUTING.md](./CONTRIBUTING.md) for more information
 
 ## License
 
-CSpydr is licensed under the [MIT License](https://mit-license.org/). View [LICENSE.md](./LICENSE.md) for more information.
+Astatine is licensed under the [GNU General Public V3 License](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text). View [LICENSE.md](./LICENSE.md) for more information.
 
 ## Resources | Reference | Inspiration
 
