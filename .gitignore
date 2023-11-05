@@ -6,6 +6,7 @@ bin/
 *.exe
 *.dll
 *.lib
+*.hi
 
 # debugger logs
 *.log
@@ -13,9 +14,7 @@ vgcore.*
 
 # editor files
 .cache/
-#*
-compile_commands.json
 
 # build directories
-build/
-builddir/
+dist-newstyle/
+
