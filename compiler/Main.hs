@@ -5,7 +5,8 @@ import LibAstatine.Context
 
 import System.Environment
 import System.IO
-import System.Exit (exitFailure)
+import System.Exit (exitFailure, exitSuccess)
+import LibAstatine.Compiler (runCompiler)
 
 main :: IO ()
 main = do
@@ -15,4 +16,6 @@ main = do
         Left a -> return a
         Right e -> hPrint stderr e >> exitFailure 
     execFinites ctx parsedArgs
-    print parsedArgs
+    result <- runCompiler $ applyArgs ctx parsedArgs
+    case result of
+        errors -> hPutStrLn stderr $ unlines $ map show errors

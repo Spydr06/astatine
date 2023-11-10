@@ -26,9 +26,13 @@ library
         LibAstatine
         LibAstatine.Util.Color
         LibAstatine.Context
+        LibAstatine.Version
+        LibAstatine.Compiler
 
     -- Modules included in this library but not exported.
-    -- other-modules:
+    other-modules:
+        LibAstatine.Util.Log
+        Paths_astatine
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -43,7 +47,6 @@ executable astatc
     -- Modules included in this executable, other than Main.
     other-modules:
         Args
-        Paths_astatine
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

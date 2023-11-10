@@ -1,13 +1,13 @@
 module Args (
     Error,
     parseArgs,
-    execFinites
+    execFinites,
+    applyArgs,
 ) where
-
-import Paths_astatine (version)
 
 import qualified LibAstatine.Util.Color as Color
 import LibAstatine.Context
+import LibAstatine.Version
 import Data.Maybe (listToMaybe)
 import System.Exit (exitSuccess)
 import Data.Version (showVersion)
@@ -29,6 +29,7 @@ instance Show Error where
 data Arg = Help
     | Version
     | Run
+    | Silent
     | OutputFile String
     | InputFile String
     deriving Show
@@ -46,6 +47,7 @@ parseArg :: Context -> [String] -> Either Arg Error
 parseArg ctx (arg:xs) | arg `elem` ["-h", "--help"] = Left Help
                       | arg == "--version" = Left Version
                       | arg `elem` ["-r", "--run"] = Left Run
+                      | arg == "--silent" = Left Silent
                       | arg `elem` ["-o", "--output"] = withParam OutputFile
                       | head arg /= '-' = Left $ Args.InputFile arg
                       | otherwise = err $ "Unknown argument `" ++ arg ++ "`. Use `--help` for help."
@@ -79,4 +81,14 @@ execFinites :: Context -> [Arg] -> IO ()
 execFinites ctx args = case filter isFinite args of
     (a:_) -> execFinite ctx a >> exitSuccess
     [] -> return ()
+
+applyArg :: Context -> Arg -> Context
+applyArg ctx Run = ctx { execute = True }
+applyArg ctx Silent = ctx { silent = True }
+applyArg ctx (OutputFile f) = ctx { outputFile = filenameToOutputFile f }
+applyArg ctx (Args.InputFile f) = ctx { inputFile = LibAstatine.Context.InputFile f }
+applyArg _ _ = undefined
+
+applyArgs :: Context -> [Arg] -> Context
+applyArgs = foldl applyArg
 
