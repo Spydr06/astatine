@@ -5,6 +5,7 @@ module LibAstatine.Error (
 
 import LibAstatine.Util.Color
 import LibAstatine.Util.Position
+import LibAstatine.Util.List
 import LibAstatine.Token
 
 data Result a = Ok a
@@ -20,15 +21,10 @@ instance Show CompilerError where
         Nothing -> ""
 
 highlightToken :: Token -> String -> Maybe String -> String
-highlightToken t s hint = let lineNumStr = justifyLeft 4 ' ' $ show $ succ $ line $ position t in
+highlightToken t s hint = let lineNumStr = justifyRight 4 ' ' $ show $ succ $ line $ position t in
     grey (' ' : beginBold ++ lineNumStr ++ endBold ++ " | ") ++ colorPartially BrightYellow True s (column $ position t) (numColumns $ LibAstatine.Token.span t) ++ "\n" ++ 
     grey (replicate (2 + length lineNumStr) ' ' ++ "| ") ++ replicate (column $ position t) ' ' ++ yellow (replicate (numColumns $ LibAstatine.Token.span t) '~') ++ getHint
         where getHint = case hint of
                 Just hint -> grey $ " <- " ++ beginBold ++ "hint: " ++ endBold ++ hint
                 Nothing -> ""
-
-
-justifyLeft, justifyRight :: Int -> a -> [a] -> [a]
-justifyLeft  n c s = s ++ replicate (n - length s) c
-justifyRight n c s = replicate (n - length s) c ++ s
 

@@ -32,6 +32,7 @@ library
     -- Modules included in this library but not exported.
     other-modules:
         LibAstatine.Util.Log
+        LibAstatine.Util.List
         LibAstatine.Util.Position
         LibAstatine.Token
         LibAstatine.Error
