@@ -1,21 +1,20 @@
-module LibAstatine.Compiler (
-    CompilerError(..),
-    runCompiler
-) where
+module LibAstatine.Compiler (runCompiler) where
 
 import LibAstatine.Context
-import LibAstatine.Util.Color (status)
 import LibAstatine.Util.Log
+import LibAstatine.Error
+import LibAstatine.File
 
-data CompilerError = Foo ()
-    deriving (Show)
-
-logCompilingStatus :: Context -> IO ()
-logCompilingStatus ctx = let (InputFile filename) = inputFile ctx in
-    logLn ctx $ status "Compiling: " ++ filename
+import System.IO
+import LibAstatine.Lexer
 
 runCompiler :: Context -> IO [CompilerError]
 runCompiler ctx = do
     logCompilingStatus ctx 
-    return []
+    res <- readSourceFile ctx
+    case res of
+        Ok source -> case lexFile ctx source of
+            Ok tokens -> print tokens >> return []
+            Err err -> return [err]
+        Err err -> return [err]
 

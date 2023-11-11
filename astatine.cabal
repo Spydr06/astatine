@@ -32,6 +32,11 @@ library
     -- Modules included in this library but not exported.
     other-modules:
         LibAstatine.Util.Log
+        LibAstatine.Util.Position
+        LibAstatine.Token
+        LibAstatine.Error
+        LibAstatine.File
+        LibAstatine.Lexer
         Paths_astatine
 
     -- LANGUAGE extensions used by modules in this package.
