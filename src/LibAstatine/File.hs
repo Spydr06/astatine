@@ -1,6 +1,7 @@
 module LibAstatine.File (
     SourceFile(..),
-    readSourceFile
+    readSourceFile,
+    LibAstatine.File.getLine
 ) where
 
 import LibAstatine.Error
@@ -9,7 +10,7 @@ import LibAstatine.Context
 import Data.Functor ((<&>))
 
 import GHC.IO.Exception (IOException(ioe_description))
-import Control.Exception (try, handle)
+import Control.Exception (handle)
 
 data SourceFile = SourceFile {
     sourceFilePath :: String,

@@ -57,7 +57,7 @@ colorString :: Color -> String -> String
 colorString c s = "\ESC[" ++ ansiCode c ++ "m" ++ s ++ reset
 
 colorPartially :: Color -> Bool -> String -> Int -> Int -> String
-colorPartially c bold s lo hi = take lo s ++ (if bold then beginBold else "") ++ colorString c (slice lo hi) ++ drop hi s
+colorPartially c isBold s lo hi = take lo s ++ (if isBold then beginBold else "") ++ colorString c (slice lo hi) ++ drop hi s
     where slice from to = take (to - from) $ drop from s
 
 beginBold :: String 

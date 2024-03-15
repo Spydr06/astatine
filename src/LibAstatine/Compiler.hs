@@ -5,16 +5,14 @@ import LibAstatine.Util.Log
 import LibAstatine.Error
 import LibAstatine.File
 
-import System.IO
 import LibAstatine.Lexer
+import qualified LibAstatine.SExpr as SExpr
 
 runCompiler :: Context -> IO [CompilerError]
 runCompiler ctx = do
     logCompilingStatus ctx 
     res <- readSourceFile ctx
-    case res of
-        Ok source -> case lexFile ctx source of
-            Ok tokens -> print tokens >> return []
-            Err err -> return [err]
-        Err err -> return [err]
+    case res >>= lexFile >>= SExpr.parseAll of
+        Ok expr -> putStrLn (unlines $ map show expr) >> return []
+        Err err -> return [err] 
 

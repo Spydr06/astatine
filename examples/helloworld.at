@@ -1,9 +1,10 @@
-module Main where
-import * from IO
+(module Main
+    (import IO))
+
+(typedef Foo Int32)
 
 -- prints 'Hello, World' to stdout
-main :: (args [String]) -> Int32
-    = do
-        IO::puts("Hello, World")
-        0
-    end
+(let main (args) (do
+    (IO::puts "Hello, World")
+    0))
+

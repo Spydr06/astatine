@@ -41,5 +41,5 @@ defaultContext :: Context
 defaultContext = Context "" (InputFile "") (Executable defaultExecName) False False stdout
 
 getContext :: String -> Context
-getContext progName = defaultContext { progName = progName }  
+getContext progName' = defaultContext { progName = progName' }  
 

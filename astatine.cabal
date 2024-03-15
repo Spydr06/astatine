@@ -38,6 +38,7 @@ library
         LibAstatine.Error
         LibAstatine.File
         LibAstatine.Lexer
+        LibAstatine.SExpr
         Paths_astatine
 
     -- LANGUAGE extensions used by modules in this package.
@@ -46,6 +47,8 @@ library
     hs-source-dirs:   src
 
     default-language: Haskell2010
+
+    ghc-options: -Wall -Wno-name-shadowing
 
 executable astatc
     main-is:          Main.hs
@@ -62,6 +65,8 @@ executable astatc
 
     hs-source-dirs:   compiler
     default-language: Haskell2010
+
+    ghc-options: -Wall -Wno-name-shadowing
 
 test-suite libastatine-tests
     default-language: Haskell2010

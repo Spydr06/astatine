@@ -55,6 +55,7 @@ parseArg ctx (arg:xs) | arg `elem` ["-h", "--help"] = Left Help
           withParam f = case listToMaybe xs of
               Nothing -> err $ "Argument `" ++ arg ++ "` expects parameter afterwards."
               Just param -> Left $ f param
+parseArg _ [] = undefined
 
 parseArgs :: Context -> [String] -> Either [Arg] Error
 parseArgs _ [] = Left []
@@ -66,7 +67,7 @@ parseArgs ctx args@(_:xs) = case parseArg ctx args of
     Right e -> Right e
 
 helpText :: Context -> String
-helpText ctx = "foo"
+helpText _ = "foo"
 
 execFinite :: Context -> Arg -> IO ()
 execFinite ctx Help = putStrLn $ helpText ctx

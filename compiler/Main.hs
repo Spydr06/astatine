@@ -5,7 +5,7 @@ import LibAstatine.Context
 
 import System.Environment
 import System.IO
-import System.Exit (exitFailure, exitSuccess)
+import System.Exit (exitFailure)
 import LibAstatine.Compiler (runCompiler)
 
 main :: IO ()
