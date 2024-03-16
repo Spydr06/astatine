@@ -33,11 +33,11 @@ parseAll tokens = let (result, remaining) = parse tokens in
 parse :: [Positioned Token.Token] -> (Result SExpr, [Positioned Token.Token])
 parse [] = (Ok Nil, [])
 parse (t:ts) = case positioned t of
-    Token.StringLiteral s -> (Ok $ StringLiteral s, ts)
+    Token.StringLiteral _ -> (StringLiteral <$> escapeString t, ts)
     Token.FloatLiteral f -> (Ok $ FloatLiteral $ read f, ts)
     Token.IntegerLiteral i -> (Ok $ IntegerLiteral $ read i, ts)
     Token.CharLiteral c -> (Ok $ CharLiteral c, ts)
-    Token.EscapedCharLiteral c -> (CharLiteral <$> escapeChar c, ts)
+    Token.EscapedCharLiteral _ -> (CharLiteral <$> escapeChar t, ts)
     Token.Identifier "nil" -> (Ok Nil, ts)
     Token.Identifier "true" -> (Ok STrue, ts)
     Token.Identifier "false" -> (Ok SFalse, ts)
@@ -57,6 +57,33 @@ parsePair ts kind closing = let (fst, ts') = parse ts in case fst of
         Err err -> (Err err, ts'')
     Err err -> (Err err, ts')
 
-escapeChar :: Char -> Result Char
-escapeChar = Ok -- TODO: resolve escape-codes
+escapeCodes :: [(Char, Char)]
+escapeCodes = [
+        ('0', '\0'),
+        ('a', '\a'), ('b', '\b'),
+        ('f', '\f'),
+        ('n', '\n'), ('r', '\r'),
+        ('t', '\t'), ('v', '\v'),
+        ('\\', '\\'), ('\'', '\''), ('"', '"')
+    ]
+
+escapeChar :: Positioned Token.Token -> Result Char
+escapeChar t = case positioned t of
+    Token.EscapedCharLiteral c -> case lookup c escapeCodes of
+        Just c' -> Ok c'
+        Nothing -> Err $ ParseError t $ "unknown escape code `\\`" ++ [c] ++ "`"
+    _ -> undefined
+
+escapeString :: Positioned Token.Token -> Result String
+escapeString t = case positioned t of
+    Token.StringLiteral s -> case escape s of
+        Just s' -> Ok s'
+        Nothing -> Err $ ParseError t "unknown escape code in string literal"
+    _ -> undefined
+    where escape [] = Just []
+          escape ('\\':x:xs) = do
+                x' <- lookup x escapeCodes
+                (x':) <$> escape xs
+          escape (x:xs) = (x:) <$> escape xs
+
 

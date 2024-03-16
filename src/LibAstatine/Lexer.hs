@@ -35,8 +35,13 @@ lexToken input pos = let (s, ws) = skipWhitespace input 0 in fmap (,ws) (case s 
         Just token -> Ok $ Just $ Positioned pos token
         Nothing | isDigit c -> Ok $ Just $ Positioned pos $ IntegerLiteral $ c : takeWhile isDigit cs -- TODO: float literal 
                 | isIdent c -> Ok $ Just $ Positioned pos $ Identifier $ c : takeWhile isIdent cs
-                | c == '"' -> undefined -- TODO: string literal
-                | c == '\'' -> undefined -- TODO: char literal
+                | c == '"' -> case lexStringLit cs of
+                    Just i -> Ok $ Just $ Positioned pos $ StringLiteral $ take i cs
+                    Nothing -> Err $ LexerError pos "invalid string literal"
+                | c == '\'' -> case cs of
+                    ('\\' : c' : '\'' : _) -> Ok $ Just $ Positioned pos $ EscapedCharLiteral c'
+                    (c' : '\'' : _) -> Ok $ Just $ Positioned pos $ CharLiteral c'
+                    _ -> Err $ LexerError pos "invalid character literal"
         _ -> Err $ LexerError pos $ "unknown token " ++ [c])
     where symbols = [
                 ('(', LParen),   (')', RParen),
@@ -45,8 +50,16 @@ lexToken input pos = let (s, ws) = skipWhitespace input 0 in fmap (,ws) (case s 
                 ('#', QuoteChar)
             ]
 
+lexStringLit :: String -> Maybe Int
+lexStringLit [] = Nothing
+lexStringLit ['\\'] = Nothing
+lexStringLit ('\\':_:cs) = (2+) <$> lexStringLit cs 
+lexStringLit ('"':_) = Just 0
+lexStringLit (_:cs) = succ <$> lexStringLit cs
+
 skipWhitespace :: String -> Int -> (String, Int)
 skipWhitespace [] i = ([], i)
 skipWhitespace ('-':'-':_) i = ([], i)
 skipWhitespace s@(x:xs) i | isSpace x = skipWhitespace xs $ succ i
                           | otherwise = (s, i)
+
