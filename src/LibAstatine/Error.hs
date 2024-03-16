@@ -30,6 +30,7 @@ data CompilerError = ReadFileError String String -- filename error
     | LexerError Position String
     | ParseError (Positioned Token) String
     | UnexpectedEof String
+    | UnexpectedSExpr String
 
 {- instance Show CompilerError where
     show (ReadFileError filename error) = errorC "[Error]" ++ " Could not read `" ++ filename ++ "`: " ++ error
@@ -50,3 +51,4 @@ instance Show CompilerError where
     show (LexerError position msg) = errorC "[Error] " ++ show position ++ ": " ++ msg
     show (ParseError position msg) = errorC "[Error] " ++ show position ++ ": " ++ msg
     show (UnexpectedEof msg) = errorC "[Error] " ++ "Unexpected end of file: " ++ msg
+    show (UnexpectedSExpr msg) = errorC "[Error] " ++ "Unexpected s-expression: " ++ msg

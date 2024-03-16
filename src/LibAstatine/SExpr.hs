@@ -1,7 +1,8 @@
 module LibAstatine.SExpr (
     parse,
     parseAll,
-    SExpr(..)
+    SExpr(..),
+    PairKind(..)
 ) where
 
 import qualified LibAstatine.Token as Token
@@ -11,6 +12,16 @@ import LibAstatine.Error (Result (..), CompilerError(UnexpectedEof, ParseError))
 
 data PairKind = Round | Curly | Square
     deriving Show
+
+showOpening :: PairKind -> String
+showOpening Round = "("
+showOpening Curly = "{"
+showOpening Square = "["
+
+showClosing :: PairKind -> String
+showClosing Round = ")"
+showClosing Curly = "}"
+showClosing Square = "]"
 
 data SExpr = Identifier String
     | IntegerLiteral Integer
@@ -23,7 +34,23 @@ data SExpr = Identifier String
     | PairNil PairKind
     | Quote SExpr
     | Pair PairKind SExpr SExpr
-    deriving Show
+
+instance Show SExpr where
+    show (Identifier s) = s
+    show (IntegerLiteral i) = show i
+    show (FloatLiteral f) = show f
+    show (StringLiteral s) = '"' : show s ++ "\""
+    show (CharLiteral c) = '\'' : show c ++ "'"
+    show STrue = "true"
+    show SFalse = "false"
+    show Nil = "nil"
+    show (PairNil kind) = showOpening kind ++ showClosing kind
+    show (Quote inner) = '#' : show inner
+    show (Pair kind fst snd) = showOpening kind ++ show fst ++ showPair snd
+        where showPair (PairNil kind) = showClosing kind
+              showPair (Pair _ fst snd) = ' ' : show fst ++ showPair snd
+              showPair sexp = ' ' : show sexp
+
 
 parseAll :: [Positioned Token.Token] -> Result [SExpr]
 parseAll [] = Ok []

@@ -1,0 +1,37 @@
+module Main requires "c"
+
+import Std.Io (Int32)
+
+; extern functions
+extern "C" in
+    ; implicit `Void` return
+    proc puti(i :: Int32)
+    proc puts(s :: &Char)
+end
+
+; define constants
+const N :: Int32 in 10 end
+
+; calculate the n-th fibonacci number
+proc fibonacci(n :: Int32) :: Int32 in
+    0 1 while peek n < in
+        let a, b in
+            b a b +
+        end
+    end
+
+    ; remove 'b' from the stack
+    delete
+end
+
+; entry point
+proc main() :: Int32 in
+    'Hello, World' puts
+    10 fibonacci puti
+    0
+end
+
+proc main(n :: Int32) :: Int32 = do
+    
+end
+

@@ -1,6 +1,8 @@
-(module Main)
+(module Main (IO))
+
+(let foo 10)
 
 -- main function that returns 0
-(defun main)
-
-(defun foreign puts (str))
+(defun main (argc argv) (do
+    (IO.puts "Hello, World")
+))

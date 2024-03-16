@@ -1,10 +1,10 @@
 (module Main
-    (import IO))
+    (IO))
 
 (typedef Foo Int32)
 
 -- prints 'Hello, World' to stdout
 (let main (args) (do
-    (IO::puts "Hello, World")
+    (IO::puts "Hello, World\n")
     0))
 
