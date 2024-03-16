@@ -1,8 +1,8 @@
 (module Main (IO))
 
-(let foo 10)
-
 -- main function that returns 0
 (defun main (argc argv) (do
     (IO.puts "Hello, World")
+    0
 ))
+

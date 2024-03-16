@@ -3,7 +3,8 @@ module LibAstatine.Context (
     OutputFile(..),
     Context(..),
     filenameToOutputFile,
-    getContext
+    getContext,
+    inputFilePath
 ) where
 
 import Data.List
@@ -12,9 +13,14 @@ import System.IO
 newtype InputFile = InputFile String
     deriving Show
 
+inputFilePath :: InputFile -> String
+inputFilePath (InputFile s) = s
+
 data OutputFile = Executable String
     | SharedLibrary String
     | ObjectFile String
+    | AssemblyFile String
+    | RunInPlace [String] -- cmdline arguments
     deriving Show
 
 defaultExecName :: String
@@ -33,12 +39,13 @@ data Context = Context {
 
     execute :: Bool,
     silent :: Bool,
+    verbose :: Bool,
 
     stdOut :: Handle
 } deriving Show
 
 defaultContext :: Context
-defaultContext = Context "" (InputFile "") (Executable defaultExecName) False False stdout
+defaultContext = Context "" (InputFile "") (RunInPlace []) False False False stdout
 
 getContext :: String -> Context
 getContext progName' = defaultContext { progName = progName' }  

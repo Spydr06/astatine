@@ -9,6 +9,7 @@ import LibAstatine.Token
 
 data Result a = Ok a
     | Err CompilerError
+    deriving Show
 
 instance Functor Result where
     fmap f r = case r of
@@ -31,6 +32,7 @@ data CompilerError = ReadFileError String String -- filename error
     | ParseError (Positioned Token) String
     | UnexpectedEof String
     | UnexpectedSExpr String
+    | InternalError String
 
 {- instance Show CompilerError where
     show (ReadFileError filename error) = errorC "[Error]" ++ " Could not read `" ++ filename ++ "`: " ++ error
@@ -52,3 +54,4 @@ instance Show CompilerError where
     show (ParseError position msg) = errorC "[Error] " ++ show position ++ ": " ++ msg
     show (UnexpectedEof msg) = errorC "[Error] " ++ "Unexpected end of file: " ++ msg
     show (UnexpectedSExpr msg) = errorC "[Error] " ++ "Unexpected s-expression: " ++ msg
+    show (InternalError msg) = errorC "[Error] " ++ msg

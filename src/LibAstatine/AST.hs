@@ -1,6 +1,7 @@
 module LibAstatine.AST (
     Module(..),
-    parseModule
+    parseModule,
+    checkModule
 ) where
 
 import LibAstatine.Error (Result (..), CompilerError (..))
@@ -97,4 +98,7 @@ parseExpr sexp@(Pair Round _ _) = do
           parseCall (Pair Round fst snd) = parseExpr fst >>= \fst' -> (fst':) <$> parseCall snd
           parseCall sexp = unexpectedSExpr sexp "expect call expression"
 parseExpr sexp = unexpectedSExpr sexp "expect expression"
+
+checkModule :: Module -> Result Module
+checkModule = Ok -- TODO: check AST
 

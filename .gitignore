@@ -1,6 +1,7 @@
 # binary files
 bin/
 *.o
+*.d
 *.out
 *.a
 *.exe
