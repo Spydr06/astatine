@@ -45,6 +45,7 @@ library
         LibAstatine.Lexer
         LibAstatine.SExpr
         LibAstatine.AST
+        LibAstatine.IR
         LibAstatine.Backend
         Paths_astatine
 

@@ -26,6 +26,9 @@ data OutputFile = Executable String
 defaultExecName :: String
 defaultExecName = "a.out"
 
+defaultRuntimeFile :: String
+defaultRuntimeFile = "runtime.o"
+
 filenameToOutputFile :: String -> OutputFile
 filenameToOutputFile name | ".so" `isInfixOf` name = SharedLibrary name
                           | ".o" `isInfixOf` name || 
@@ -36,6 +39,7 @@ data Context = Context {
     progName :: String,
     inputFile :: InputFile,
     outputFile :: OutputFile,
+    runtimeFile :: String,
 
     execute :: Bool,
     silent :: Bool,
@@ -45,7 +49,7 @@ data Context = Context {
 } deriving Show
 
 defaultContext :: Context
-defaultContext = Context "" (InputFile "") (RunInPlace []) False False False stdout
+defaultContext = Context "" (InputFile "") (RunInPlace []) defaultRuntimeFile False False False stdout
 
 getContext :: String -> Context
 getContext progName' = defaultContext { progName = progName' }  

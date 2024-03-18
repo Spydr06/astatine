@@ -2,20 +2,21 @@ module LibAstatine.Backend (
     generate    
 ) where
 
-import LibAstatine.AST
 import LibAstatine.Error (Result (..))
 import LibAstatine.Context
+
+import qualified LibAstatine.IR as IR;
 
 import qualified GccJit
 import GccJit.Utils (release)
 
-import System.Exit (die)
-import Foreign.C (CString, newCString, CInt)
+import Control.Monad
+import Foreign.C (CString, newCString)
 import Foreign (FunPtr, Ptr, nullPtr)
 import Foreign.Marshal.Array
-import System.IO
-import Control.Monad
 import System.Environment (getEnvironment)
+import System.Exit (die)
+import System.IO
 
 type MainFunction = Int -> Ptr CString -> Ptr CString -> IO Int
 foreign import ccall "dynamic" mkFunc :: FunPtr MainFunction -> MainFunction
@@ -27,14 +28,14 @@ unwrapOrDie x msg = do
         Nothing -> die msg
         Just x'' -> return x''
 
-generate :: Context -> Module -> IO (Result ())
+generate :: Context -> [IR.Decl] -> IO (Result ())
 generate ctx mod = do
     jit <- unwrapOrDie GccJit.contextAcquire "Could not acquire libgccjit context" 
     GccJit.setBoolOption jit GccJit.DumpGeneratedCode $ verbose ctx
 
     print mod
 
-    GccJit.contextAddDriverOption jit "runtime.o"
+    GccJit.contextAddDriverOption jit $ runtimeFile ctx
     case outputFile ctx of
         Executable path -> GccJit.contextCompileToFile jit GccJit.Executable path
         SharedLibrary path -> GccJit.contextCompileToFile jit GccJit.DynamicLibrary path

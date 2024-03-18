@@ -1,5 +1,8 @@
 module LibAstatine.AST (
     Module(..),
+    Decl(..),
+    Expr(..),
+    IdentKind(..),
     parseModule,
     checkModule
 ) where
@@ -19,11 +22,14 @@ data Decl = Function {
         funcParams :: [String],
         funcBody :: Expr
     }
-    | LetBinding {
-        letName :: String,
-        letValue :: Expr
+    | Global {
+        globalName :: String,
+        globalValue :: Expr
     }
     deriving Show
+
+data IdentKind = LocalIdent | GlobalIdent | UnresolvedIdent
+    deriving (Show, Eq)
 
 data Expr = ConstInt Integer
     | ConstFloat Double
@@ -32,7 +38,7 @@ data Expr = ConstInt Integer
     | ConstTrue
     | ConstFalse
     | ConstNil
-    | IdentExpr String
+    | IdentExpr IdentKind String
     | ListExpr [Expr]
     | CallExpr Expr [Expr]
     | DoExpr [Expr]
@@ -65,7 +71,7 @@ parseImport sexp = unexpectedSExpr sexp "expect module import of form (<import> 
 
 parseDecl :: SExpr -> Result Decl
 parseDecl (Pair Round (Identifier "defun") (Pair Round (Identifier name) (Pair Round params (Pair Round body (PairNil _))))) = Function name <$> parseParams params <*> parseExpr body
-parseDecl (Pair Round (Identifier "let") (Pair Round (Identifier name) (Pair Round value (PairNil _)))) = LetBinding name <$> parseExpr value
+parseDecl (Pair Round (Identifier "let") (Pair Round (Identifier name) (Pair Round value (PairNil _)))) = Global name <$> parseExpr value
 parseDecl sexp = unexpectedSExpr sexp "expect top-level declaration like (defun <name> (<params>...) <body>)"
 
 parseParams :: SExpr -> Result [String]
@@ -81,7 +87,7 @@ parseExpr (CharLiteral c) = Ok $ ConstChar c
 parseExpr STrue = Ok ConstTrue
 parseExpr SFalse = Ok ConstFalse
 parseExpr Nil = Ok ConstNil
-parseExpr (Identifier s) = Ok $ IdentExpr s
+parseExpr (Identifier s) = Ok $ IdentExpr UnresolvedIdent s
 parseExpr (PairNil Square) = Ok $ ListExpr []
 parseExpr sexp@(Pair Square _ _) = ListExpr <$> parseList sexp
     where parseList (PairNil Square) = Ok []
@@ -91,7 +97,7 @@ parseExpr sexp@(PairNil Round) = unexpectedSExpr sexp "empty call expression"
 parseExpr sexp@(Pair Round _ _) = do
     call <- parseCall sexp
     case call of
-        ((IdentExpr "do"):args) -> Ok $ DoExpr args 
+        ((IdentExpr _ "do"):args) -> Ok $ DoExpr args 
         (expr:args) -> Ok $ CallExpr expr args
         [] -> undefined
     where parseCall (PairNil Round) = Ok []
