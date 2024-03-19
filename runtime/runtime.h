@@ -11,25 +11,27 @@
 #define PACKED
 #endif
 
-#define DO_RUNTIME_TYPECHECKS
-
 #define QUOTE(t) #t
+
+// runtime version constants
 
 #define AT_RUNTIME_VERSION_MINOR 1
 #define AT_RUNTIME_VERSION_MAJOR 0
 
 #define AT_RUNTIME_VERSION_STRING QUOTE(AT_RUNTIME_VERSION_MAJOR) "." QUOTE(AT_RUNTIME_VERSION_MINOR)
 
-#define AT_INT(lit) ((ATValue_T){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
-#define AT_FLT(lit) ((ATValue_T){.floating=(float64_T)(lit), .datatype=AT_VAL_FLT})
-#define AT_TRUE ((ATValue_T){.boolean=true, .datatype=AT_VAL_BOOL})
-#define AT_FALSE ((ATValue_T){.boolean=false, .datatype=AT_VAL_FALSE})
-#define AT_SLIT(lit) ((ATValue_T){.string=(lit), .datatype=AT_VAL_STRING})
-#define AT_NIL ((ATValue_T){.datatype=AT_VAL_NIL})
+// astatine type and value representation
+
+#define AT_INT(lit) ((at_val_t){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
+#define AT_FLT(lit) ((at_val_t){.floating=(float64_T)(lit), .datatype=AT_VAL_FLT})
+#define AT_TRUE ((at_val_t){.boolean=true, .datatype=AT_VAL_BOOL})
+#define AT_FALSE ((at_val_t){.boolean=false, .datatype=AT_VAL_FALSE})
+#define AT_SLIT(lit) ((at_val_t){.string=(lit), .datatype=AT_VAL_STRING})
+#define AT_NIL ((at_val_t){.datatype=AT_VAL_NIL})
 
 typedef double float64_t;
 
-typedef struct PACKED AT_LIST_STRUCT ATList_T;
+typedef struct PACKED AT_LIST_STRUCT at_list_t;
 
 typedef struct PACKED AT_VALUE_STRUCT {
     union {
@@ -38,7 +40,7 @@ typedef struct PACKED AT_VALUE_STRUCT {
         bool boolean;
         void* pointer;
         const char* string;
-        ATList_T* list;
+        at_list_t* list;
     };
     enum : uint8_t {
         AT_VAL_INT,
@@ -49,30 +51,45 @@ typedef struct PACKED AT_VALUE_STRUCT {
         AT_VAL_LIST,
         AT_VAL_NIL
     } datatype;
-} ATValue_T;
+} at_val_t;
 
 struct PACKED AT_LIST_STRUCT {
-    ATList_T* next;
-    ATValue_T value;
+    at_list_t* next;
+    at_val_t value;
 };
 
+// garbage collector
+
+// allocate blocks in page-sized chunks
+#define GC_MIN_ALLOC 4096
+
+// allocator header
+typedef struct AT_GC_HEADER_STRUCT {
+    uint32_t size;
+    struct AT_GC_HEADER_STRUCT* next;
+} at_gc_header_t;
+
 typedef struct AT_GC_STRUCT {
+    at_gc_header_t base;
+    at_gc_header_t* freep;
+    at_gc_header_t* usedp;
+} at_gc_t;
 
-} ATGC_T;
+// global garbage collector
+extern at_gc_t gc;
 
-extern ATGC_T global_gc;
+void gc_begin(void);
+void gc_end(void);
 
-void gc_begin(ATGC_T* gc);
-void gc_end(ATGC_T* gc);
+void* gc_malloc(size_t size);
+void* gc_calloc(size_t nmemb, size_t size);
+void gc_free(void* ptr);
+void gc_collect(void);
 
-void* gc_malloc(ATGC_T* gc, size_t size);
-void* gc_calloc(ATGC_T* gc, size_t nmemb, size_t size);
-void gc_free(ATGC_T* gc, void* ptr);
-void gc_collect(ATGC_T* gc);
-
-
-// astatine program entry point
-extern ATValue_T Main_main(ATValue_T argc, ATValue_T argv, ATValue_T envp);
+#ifndef UNIT_TESTS
+    // astatine program entry point
+    extern at_val_t Main_main(at_val_t argc, at_val_t argv, at_val_t envp);
+#endif
 
 #endif /* _ASTATINE_RUNTIME_H */
 

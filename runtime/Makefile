@@ -1,16 +1,21 @@
 SOURCES := $(shell find -name '*.c')
 OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
 
-CFLAGS += -Wall -Wextra -std=c99 -fPIC -c
+CFLAGS += -Wall -Wextra -std=c99 -fPIC -DDO_RUNTIME_TYPECHECKS -c
 LDFLAGS += -relocatable
-
-RUNTIME ?= runtime.o
 
 .PHONY: all
 all: $(RUNTIME)
 
 $(RUNTIME): $(OBJECTS)
-	$(LD) $(LDFLAGS) $^ -o $@
+	$(LD) $(LDFLAGS) -o $@ $^
+
+.PHONY: tests
+tests: CFLAGS += -DUNIT_TESTS
+tests: $(RUNTIME_TESTS_EXE)
+
+$(RUNTIME_TESTS_EXE): $(OBJECTS)
+	$(CC) -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -MMD -MP $^ -o $@
