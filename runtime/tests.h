@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <limits.h>
 
 #ifdef __linux__
     #include <string.h>
@@ -18,17 +19,47 @@
 #define FAIL 1
 
 static int gc_init_deinit(void) {
-    gc_begin();
-    gc_end();
+    DBG_PRINTF("foo\n");
+    gc_begin_here(&gc);
+    gc_end(&gc);
     return PASS;
 }
 
 static int gc_basic_malloc(void) {
-    gc_begin();
+    gc_begin_here(&gc);
     for(size_t i = 0; i < 10; i++)
-        assert(gc_malloc(100) != NULL);
-    gc_end();
+        assert(gc_malloc(&gc, 100) != NULL);
+    gc_end(&gc);
     return PASS;
+}
+
+static int value_to_string(void) {
+    gc_begin_here(&gc);
+
+    struct { at_val_t val; const char* expect; } test_cases[] = {
+        { AT_NIL, "nil" },
+        { AT_TRUE, "true" },
+        { AT_FALSE, "false" },
+        { AT_INT(0), "0" },
+        { AT_INT(69), "69" },
+        { AT_INT(-420), "-420" },
+        { AT_FLT(3.1415), "3.1415" },
+        { AT_EMPTY_LIST, "[]" },
+        { AT_LIST(AT_L(1, AT_L(2, AT_L(3, NULL)))), "[1, 2, 3]"}
+    };
+
+    int status = PASS;
+    for(size_t i = 0; i < LEN(test_cases); i++) {
+        const char* got = at_value_to_string(test_cases[i].val);
+        if(strcmp(got, test_cases[i].expect) == 0)
+            continue;
+
+        fprintf(stderr, "\t\"%s\" did not match expected \"%s\"\n", got, test_cases[i].expect);
+        status = FAIL;
+    }
+
+    gc_end(&gc);
+    return status;
 }
 
 int main() {
@@ -41,6 +72,7 @@ int main() {
     static const struct testcase tests[] = {
         TESTCASE(gc_init_deinit),
         TESTCASE(gc_basic_malloc),
+        TESTCASE(value_to_string),
         {NULL, NULL}
     };
 #undef TESTCASE

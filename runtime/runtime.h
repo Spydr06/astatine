@@ -12,6 +12,9 @@
 #endif
 
 #define QUOTE(t) #t
+#define TOSTRING(t) QUOTE(t)
+
+#define LEN(a) (sizeof((a)) / sizeof(*(a)))
 
 // runtime version constants
 
@@ -23,23 +26,23 @@
 // astatine type and value representation
 
 #define AT_INT(lit) ((at_val_t){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
-#define AT_FLT(lit) ((at_val_t){.floating=(float64_T)(lit), .datatype=AT_VAL_FLT})
+#define AT_FLT(lit) ((at_val_t){.floating=(float64_t)(lit), .datatype=AT_VAL_FLT})
 #define AT_TRUE ((at_val_t){.boolean=true, .datatype=AT_VAL_BOOL})
-#define AT_FALSE ((at_val_t){.boolean=false, .datatype=AT_VAL_FALSE})
-#define AT_SLIT(lit) ((at_val_t){.string=(lit), .datatype=AT_VAL_STRING})
+#define AT_FALSE ((at_val_t){.boolean=false, .datatype=AT_VAL_BOOL})
 #define AT_NIL ((at_val_t){.datatype=AT_VAL_NIL})
+#define AT_EMPTY_LIST ((at_val_t){.list=NULL, .datatype=AT_VAL_LIST})
+#define AT_LIST(_list) ((at_val_t){.list=(_list), .datatype=AT_VAL_LIST})
 
 typedef double float64_t;
 
-typedef struct PACKED AT_LIST_STRUCT at_list_t;
+typedef struct PACKED AT_LIST at_list_t;
 
-typedef struct PACKED AT_VALUE_STRUCT {
+typedef struct PACKED AT_VALUE {
     union {
         int64_t integer;
         float64_t floating;
         bool boolean;
         void* pointer;
-        const char* string;
         at_list_t* list;
     };
     enum : uint8_t {
@@ -47,44 +50,70 @@ typedef struct PACKED AT_VALUE_STRUCT {
         AT_VAL_FLT,
         AT_VAL_BOOL,
         AT_VAL_PTR,
-        AT_VAL_STRING,
         AT_VAL_LIST,
         AT_VAL_NIL
     } datatype;
 } at_val_t;
 
-struct PACKED AT_LIST_STRUCT {
+char* at_value_to_string(at_val_t value);
+
+#define AT_L(_value, _next) (&((at_list_t){.next=(_next), .value=(_value)}))
+
+struct PACKED AT_LIST {
     at_list_t* next;
     at_val_t value;
 };
+
+// debug 
+#ifdef RUNTIME_DEBUG
+    #include <stdio.h>
+    #define DBG_PRINTF(...) fprintf(stderr, "* \033[1;36mDEBUG\033[0m : " __FILE__ ":" TOSTRING(__LINE__) ": " __VA_ARGS__)
+#else
+    #define DBG_PRINTF(...)
+#endif
 
 // garbage collector
 
 // allocate blocks in page-sized chunks
 #define GC_MIN_ALLOC 4096
 
-// allocator header
-typedef struct AT_GC_HEADER_STRUCT {
-    uint32_t size;
-    struct AT_GC_HEADER_STRUCT* next;
-} at_gc_header_t;
+// Support for MSVC
+#ifdef _MSC_VER
+#define __builtin_frame_address(x) ((void)(x), _AddressOfReturnAddress())
+#endif
 
-typedef struct AT_GC_STRUCT {
-    at_gc_header_t base;
-    at_gc_header_t* freep;
-    at_gc_header_t* usedp;
-} at_gc_t;
+typedef struct AT_ALLOCATION_MAP at_allocation_map_t;
+
+typedef struct AT_GARBAGE_COLLECTOR {
+    at_allocation_map_t* allocs;
+    bool paused;
+    void* stack_bottom;
+    size_t min_size;
+} at_garbage_collector_t;
 
 // global garbage collector
-extern at_gc_t gc;
+extern at_garbage_collector_t gc;
 
-void gc_begin(void);
-void gc_end(void);
+#define gc_begin(gc, stack_base) (gc_begin_ext((gc), (stack_base), 1024, 1024, 0.2, 0.8, 0.5))
+#define gc_begin_here(gc) gc_begin(gc, __builtin_frame_address(0))
 
-void* gc_malloc(size_t size);
-void* gc_calloc(size_t nmemb, size_t size);
-void gc_free(void* ptr);
-void gc_collect(void);
+void gc_begin_ext(at_garbage_collector_t* gc, void* stack_base, size_t initial_capacity, size_t min_capacity, double downsize_load_factor, double upsize_load_factor, double sweep_factor);
+size_t gc_end(at_garbage_collector_t* gc);
+
+void gc_pause(at_garbage_collector_t* gc);
+void gc_resume(at_garbage_collector_t* gc); 
+size_t gc_run(at_garbage_collector_t* gc);
+
+#define gc_malloc(gc, size) (gc_malloc_ext((gc), (size), NULL))
+#define gc_calloc(gc, nmemb, size) (gc_malloc_ext((gc), (nmemb), (size), NULL))
+
+void* gc_malloc_ext(at_garbage_collector_t* gc, size_t size, void (*dtor)(void*));
+void* gc_calloc_ext(at_garbage_collector_t* gc, size_t nmemb, size_t size, void (*dtor)(void*));
+void* gc_realloc(at_garbage_collector_t* gc, void* ptr, size_t size);
+void gc_free(at_garbage_collector_t* gc, void* ptr);
+
+void* gc_make_static(at_garbage_collector_t* gc, void* ptr);
+
 
 #ifndef UNIT_TESTS
     // astatine program entry point
