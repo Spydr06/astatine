@@ -4,7 +4,8 @@ module LibAstatine.AST (
     Expr(..),
     IdentKind(..),
     parseModule,
-    checkModule
+    checkModule,
+    isConst
 ) where
 
 import LibAstatine.Error (Result (..), CompilerError (..))
@@ -43,6 +44,17 @@ data Expr = ConstInt Integer
     | CallExpr Expr [Expr]
     | DoExpr [Expr]
     deriving Show
+
+isConst :: Expr -> Bool
+isConst (ConstInt _) = True
+isConst (ConstFloat _) = True
+isConst (ConstString _) = True
+isConst (ConstChar _) = True
+isConst ConstTrue = True
+isConst ConstFalse = True
+isConst ConstNil = True
+isConst (IdentExpr _ _) = True
+isConst _ = False
 
 unexpectedEof :: String -> Result a
 unexpectedEof = Err . UnexpectedEof
