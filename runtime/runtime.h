@@ -23,47 +23,6 @@
 
 #define AT_RUNTIME_VERSION_STRING QUOTE(AT_RUNTIME_VERSION_MAJOR) "." QUOTE(AT_RUNTIME_VERSION_MINOR)
 
-// astatine type and value representation
-
-#define AT_INT(lit) ((at_val_t){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
-#define AT_FLT(lit) ((at_val_t){.floating=(float64_t)(lit), .datatype=AT_VAL_FLT})
-#define AT_TRUE ((at_val_t){.boolean=true, .datatype=AT_VAL_BOOL})
-#define AT_FALSE ((at_val_t){.boolean=false, .datatype=AT_VAL_BOOL})
-#define AT_NIL ((at_val_t){.datatype=AT_VAL_NIL})
-#define AT_EMPTY_LIST ((at_val_t){.list=NULL, .datatype=AT_VAL_LIST})
-#define AT_LIST(_list) ((at_val_t){.list=(_list), .datatype=AT_VAL_LIST})
-
-typedef double float64_t;
-
-typedef struct PACKED AT_LIST at_list_t;
-
-typedef struct PACKED AT_VALUE {
-    union {
-        int64_t integer;
-        float64_t floating;
-        bool boolean;
-        void* pointer;
-        at_list_t* list;
-    };
-    enum : uint8_t {
-        AT_VAL_INT,
-        AT_VAL_FLT,
-        AT_VAL_BOOL,
-        AT_VAL_PTR,
-        AT_VAL_LIST,
-        AT_VAL_NIL
-    } datatype;
-} at_val_t;
-
-char* at_value_to_string(at_val_t value);
-
-#define AT_L(_value, _next) (&((at_list_t){.next=(_next), .value=(_value)}))
-
-struct PACKED AT_LIST {
-    at_list_t* next;
-    at_val_t value;
-};
-
 // debug 
 #ifdef RUNTIME_DEBUG
     #include <stdio.h>
@@ -72,10 +31,68 @@ struct PACKED AT_LIST {
     #define DBG_PRINTF(...)
 #endif
 
-// garbage collector
+// astatine type and value representation
 
-// allocate blocks in page-sized chunks
-#define GC_MIN_ALLOC 4096
+#define AT_INT(lit) ((at_val_t){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
+#define AT_FLT(lit) ((at_val_t){.floating=(float64_t)(lit), .datatype=AT_VAL_FLT})
+#define AT_CHAR(lit) ((at_val_t){.character=(unsigned char)(lit), .datatype=AT_VAL_CHAR})
+#define AT_TRUE ((at_val_t){.boolean=true, .datatype=AT_VAL_BOOL})
+#define AT_FALSE ((at_val_t){.boolean=false, .datatype=AT_VAL_BOOL})
+#define AT_NIL ((at_val_t){.datatype=AT_VAL_NIL})
+#define AT_EMPTY_LIST ((at_val_t){.list=NULL, .datatype=AT_VAL_LIST})
+#define AT_LIST(_list) ((at_val_t){.list=(_list), .datatype=AT_VAL_LIST})
+
+typedef double float64_t;
+
+typedef struct AT_LIST at_list_t;
+
+typedef struct AT_VALUE {
+    union {
+        int64_t integer;
+        float64_t floating;
+        unsigned char character;
+        bool boolean;
+        void* pointer;
+        at_list_t* list;
+    };
+    enum : uint8_t {
+        AT_VAL_NIL = 0,
+        AT_VAL_INT = 1,
+        AT_VAL_FLT = 2,
+        AT_VAL_CHAR = 3,
+        AT_VAL_BOOL = 4,
+        AT_VAL_PTR = 5,
+        AT_VAL_LIST = 6,
+    } datatype;
+} at_val_t;
+
+// intrinsic functions
+char* at_value_to_string(at_val_t value);
+
+extern at_val_t at_slit(const char* str);
+
+// linked lists
+
+#define AT_L(_value, _next) (&((at_list_t){.next=(_next), .value=(_value)}))
+
+struct AT_LIST {
+    at_list_t* next;
+    at_val_t value;
+};
+
+// list functions
+at_val_t at_list_length(at_list_t* list);
+
+at_list_t* at_list_add(at_list_t* list, at_val_t value); // append single element to the end of a list
+at_list_t* at_list_append(at_list_t* list, at_list_t* append); // append list to the end of another list
+
+at_list_t* at_list_push(at_list_t* list, at_val_t value); // push single element to the start of the list
+
+at_val_t at_list_head(at_list_t* list);
+at_val_t at_list_tail(at_list_t* list);
+
+
+// garbage collector
 
 // Support for MSVC
 #ifdef _MSC_VER
