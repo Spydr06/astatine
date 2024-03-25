@@ -1,5 +1,27 @@
-
 #include "runtime.h"
+#include <stdarg.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#ifdef __linux
+    #define __USE_XOPEN2K8
+    #include <string.h>
+    #undef __USE_XOPEN2K8
+#else
+    #include <string.h>
+#endif
+
+#ifdef __GLIBC__
+    #include <execinfo.h>
+#endif
+
+#ifdef __linux__
+    #define __USE_POSIX
+    #define __USE_POSIX199309
+    #define __USE_MISC
+    #define __USE_XOPEN_EXTENDED
+    #include <signal.h>
+#endif
 
 at_garbage_collector_t gc;
 
@@ -10,6 +32,7 @@ at_garbage_collector_t gc;
 #include <stdio.h>
 
 int main(int argc, char** argv, char** envp) {
+    install_handlers();
     gc_begin(&gc, &argc);
 
     at_val_t exit_code = Main_main(AT_INT(argc), AT_NIL, AT_NIL);
@@ -23,4 +46,57 @@ int main(int argc, char** argv, char** envp) {
 }
 
 #endif
+
+void dump_stacktrace(FILE* fp) {
+#ifdef __GLIBC__
+    static void* stacktrace[STACKTRACE_MAX_SIZE];
+
+    fflush(fp);
+    size_t size = backtrace(stacktrace, LEN(stacktrace));
+    
+    fprintf(fp, ">> Stack trace:\n");
+    backtrace_symbols_fd(stacktrace, size, fileno(fp));
+
+    fflush(fp);
+#endif
+}
+
+void NORETURN panic(const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+
+    fprintf(stderr, "\033[1;31mPANIC:\033[0m ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+
+    dump_stacktrace(stderr);
+
+    va_end(ap);
+    exit(EXIT_FAILURE);
+}
+
+#ifdef __linux__
+static void NORETURN sighandler(int sig) {
+    panic("received signal %d:\n", strsignal(sig), sig);
+}
+#endif
+
+void install_handlers(void) {
+#ifdef __linux__
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sa.sa_handler = sighandler;
+
+    const int err_signals[] = {
+        SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGQUIT, SIGSEGV, SIGSYS, SIGTRAP
+    };
+
+    // install for all signals
+    for(size_t i = 0; i < LEN(err_signals); i++) {
+        if(sigaction(err_signals[i], &sa, NULL) == -1)
+            fprintf(stderr, "error setting up signal handler for signal %s\n", strsignal(err_signals[i]));
+    }
+#endif
+}
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <string.h>
 
 #ifdef __linux__
     #include <string.h>
@@ -99,6 +100,8 @@ int main() {
         {NULL, NULL}
     };
 #undef TESTCASE
+
+    install_handlers();
 
     size_t failed = 0, passed = 0;
     for(const struct testcase* t = tests; t->func; t++)

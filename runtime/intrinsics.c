@@ -18,11 +18,11 @@ char* at_value_to_string(at_val_t value) {
             snprintf(buf, 40, "%g", value.floating);
             return buf;
         }
-        case AT_VAL_PTR: {
+/*        case AT_VAL_FUNC: {
             char* buf = gc_malloc(&gc, 20 * sizeof(char));
             snprintf(buf, 20, "%p", value.pointer);
             return buf;
-        }
+        }*/
         case AT_VAL_LIST: {
             if(!value.list)
                 return "[]";
@@ -63,3 +63,28 @@ at_val_t at_slit(const char* str) {
 
     return val;
 }
+
+at_val_t at_call(at_val_t val, at_val_t arg) {
+#ifdef DO_RUNTIME_TYPECHECKS
+    if(val.datatype != AT_VAL_FUNC)
+        fprintf(stderr, "at_call: supplied function does not have type AT_VAL_FUNC.\n");
+#endif
+
+    
+}
+
+/*at_val_t at_add(at_val_t a, at_val_t b) {
+    switch(a.datatype) {
+        case AT_VAL_FLT:
+            switch(b.datatype) {
+                case AT_VAL_FLT:
+                    return AT_FLT(a.floating + b.floating);
+                case AT_VAL_INT:
+                    return AT_FLT(a.floating + (double) b.integer);
+                case AT_VAL_CHAR:
+                    return AT_FLT(a.floating + (double) b.character);
+                default:
+                    
+            }
+    }
+}*/

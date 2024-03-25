@@ -5,10 +5,24 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+#ifdef __linux__
+    #define __USE_POSIX
+    #include <stdio.h>
+    #undef __USE_POSIX
+#else
+    #include <stdio.h>
+#endif
+
 #ifdef __GNUC__
 #define PACKED __attribute__((packed))
 #else
 #define PACKED
+#endif
+
+#ifdef __GNUC__
+#define NORETURN __attribute__((noreturn))
+#else
+#define NORETURN
 #endif
 
 #define QUOTE(t) #t
@@ -31,6 +45,12 @@
     #define DBG_PRINTF(...)
 #endif
 
+#define STACKTRACE_MAX_SIZE 128
+
+void NORETURN panic(const char* fmt, ...);
+void dump_stacktrace(FILE* fp);
+void install_handlers(void);
+
 // astatine type and value representation
 
 #define AT_INT(lit) ((at_val_t){.integer=(int64_t)(lit), .datatype=AT_VAL_INT})
@@ -45,6 +65,7 @@
 typedef double float64_t;
 
 typedef struct AT_LIST at_list_t;
+typedef struct AT_FUNC at_func_t;
 
 typedef struct AT_VALUE {
     union {
@@ -53,6 +74,7 @@ typedef struct AT_VALUE {
         unsigned char character;
         bool boolean;
         void* pointer;
+        at_func_t* func;
         at_list_t* list;
     };
     enum : uint8_t {
@@ -61,7 +83,7 @@ typedef struct AT_VALUE {
         AT_VAL_FLT = 2,
         AT_VAL_CHAR = 3,
         AT_VAL_BOOL = 4,
-        AT_VAL_PTR = 5,
+        AT_VAL_FUNC = 5,
         AT_VAL_LIST = 6,
     } datatype;
 } at_val_t;
@@ -70,6 +92,7 @@ typedef struct AT_VALUE {
 char* at_value_to_string(at_val_t value);
 
 extern at_val_t at_slit(const char* str);
+extern at_val_t at_add(at_val_t a, at_val_t b);
 
 // linked lists
 
@@ -91,6 +114,19 @@ at_list_t* at_list_push(at_list_t* list, at_val_t value); // push single element
 at_val_t at_list_head(at_list_t* list);
 at_val_t at_list_tail(at_list_t* list);
 
+// function values
+
+#define AT_F(_fptr, _expected_args) ((at_func_t){.fptr=(at_val_t(*)())(_fptr), .curried_args=NULL, .expected_args=(_expected_args)})
+
+struct AT_FUNC {
+    at_val_t (*fptr)();
+    at_list_t* curried_args;
+    uint8_t expected_args;
+};
+
+// function functions
+
+extern at_val_t at_call(at_val_t func, at_val_t arg);
 
 // garbage collector
 

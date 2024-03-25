@@ -1,8 +1,8 @@
 SOURCES := $(shell find -name '*.c')
 OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
 
-CFLAGS += -Wall -Wextra -std=c99 -fPIC -DDO_RUNTIME_TYPECHECKS -c
-LDFLAGS += -relocatable
+CFLAGS += -Wall -Wextra -Wno-use-after-free -std=c99 -fPIC -DDO_RUNTIME_TYPECHECKS -c -rdynamic
+LDFLAGS += -relocatable -rdynamic
 
 .PHONY: all
 all: $(RUNTIME)
@@ -15,7 +15,7 @@ tests: CFLAGS += -DUNIT_TESTS
 tests: $(RUNTIME_TESTS_EXE)
 
 $(RUNTIME_TESTS_EXE): $(OBJECTS)
-	$(CC) -o $@ $^
+	$(CC) -rdynamic -o $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -MMD -MP $^ -o $@
