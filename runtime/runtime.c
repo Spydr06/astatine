@@ -32,6 +32,7 @@ at_garbage_collector_t gc;
 
 int main(int argc, char** argv, char** envp) {
     install_handlers();
+    __init_globals();
     gc_begin(&gc, &argc);
 
     at_val_t exit_code = Main_main(AT_INT(argc), AT_NIL, AT_NIL);

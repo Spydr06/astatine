@@ -1,8 +1,9 @@
 (module Main (IO))
 
+(let x 0)
+
 -- main function that returns 0
 (defun main (argc argv) (do
-    ["a" "b" "c"]
-    [1 2 3]
+    0
 ))
 

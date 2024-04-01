@@ -172,9 +172,7 @@ void* gc_make_static(at_garbage_collector_t* gc, void* ptr);
 #ifndef UNIT_TESTS
     // astatine program entry point
     extern at_val_t Main_main(at_val_t argc, at_val_t argv, at_val_t envp);
-
-    // type size check
-    extern size_t at_type_size_check(void);
+    extern void __init_globals(void);
 #endif
 
 #endif /* _ASTATINE_RUNTIME_H */

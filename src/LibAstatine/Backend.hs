@@ -54,7 +54,7 @@ data Datatype = ATNil
     | ATFlt
     | ATChar
     | ATBool
-    | ATPtr
+    | ATFunc
     | ATList
     deriving Enum
 
@@ -79,7 +79,9 @@ data Generator = Generator {
     intrinsics :: [(String, Ptr GccJit.Function)],
 
     currentFunc :: Maybe (Ptr GccJit.Function),
-    currentBlock :: Maybe (Ptr GccJit.Block)
+    currentBlock :: Maybe (Ptr GccJit.Block),
+
+    globalInitBlock :: Ptr GccJit.Block
 }
 
 newGen :: JIT -> IO Generator
@@ -87,8 +89,10 @@ newGen jit = do
         prims <- buildPrimTypes jit
         (atData, at) <- buildATType jit prims
         intrns <- buildBuiltins jit (castPtr at) $ builtinIntrns prims
-        return $ Generator prims (castPtr at) at atData intrns Nothing Nothing
-    where buildATType jit prims = do
+        globalInit <- buildGlobalInitCallback jit prims at
+        return $ Generator prims (castPtr at) at atData intrns Nothing Nothing globalInit
+    where
+        buildATType jit prims = do
             unFields <- mapM (\(t, id) -> GccJit.contextNewField jit nullPtr (t prims) id) 
                         [(uInt64, "integer"), (double, "floating"), (bool, "boolean"), (voidPtr, "ptr")]
             valUnion <- GccJit.contextNewUnionType jit nullPtr "at_val_data_t" unFields
@@ -97,7 +101,11 @@ newGen jit = do
             dtField <- GccJit.contextNewField jit nullPtr (uInt8 prims) "datatype" 
             valStruct <- GccJit.contextNewStructType jit nullPtr "at_val_t" [valField, dtField]
             return (valUnion, valStruct)
-         
+        buildGlobalInitCallback jit prims at = do
+            voidT <- GccJit.contextGetType jit GccJit.Void
+            func <- GccJit.contextNewFunction jit nullPtr GccJit.FunctionExported voidT "__init_globals" [] False
+            block <- fromJust <$> GccJit.functionNewBlock func Nothing
+            return block
 
 type MainFunction = Int -> Ptr CString -> Ptr CString -> IO Int
 foreign import ccall "dynamic" mkFunc :: FunPtr MainFunction -> MainFunction
@@ -123,6 +131,9 @@ generate ctx mod = do
     gen <- newGen jit
 
     mapM_ (generateDecl jit gen) mod  
+
+    GccJit.blockEndWithVoidReturn (globalInitBlock gen) nullPtr
+
     mapM_ (GccJit.contextAddDriverOption jit) $ driverOpts ctx
     GccJit.contextAddDriverOption jit $ runtimeFile ctx
     
@@ -204,6 +215,11 @@ generateBool jit gen b = do
     bVal <- GccJit.contextNewRValueFromInt jit (bool $ primTypes gen) $ fromEnum b
     generateVal jit gen ATBool $ Just bVal
 
+generateFloat :: JIT -> Generator -> Double -> IO (Ptr GccJit.RValue)
+generateFloat jit gen f = do
+    fVal <- GccJit.contextNewRValueFromDouble jit (double $ primTypes gen) f
+    generateVal jit gen ATFlt $ Just fVal
+
 generateDecl :: JIT -> Generator -> IR.Decl -> IO ()
 generateDecl jit gen (IR.Function name params body) = do
     params' <- mapM (GccJit.contextNewParam jit nullPtr $ atType gen) params
@@ -211,7 +227,10 @@ generateDecl jit gen (IR.Function name params body) = do
     block <- unwrapOrDie (GccJit.functionNewBlock func Nothing) "NULL block"
     generateProcedure jit gen { currentFunc = Just func, currentBlock = Just block } body >>= GccJit.blockEndWithReturn block nullPtr
 
-generateDecl _ _ (IR.Global _ _) = undefined
+generateDecl jit gen (IR.Global name value) = do
+    global <- GccJit.contextNewGlobal jit nullPtr GccJit.GlobalInternal (atType gen) name
+    generateExpr jit gen value >>=
+        GccJit.blockAddAssignment (globalInitBlock gen) nullPtr global
 
 generateProcedure :: JIT -> Generator -> IR.Procedure AST.Expr -> IO (Ptr GccJit.RValue)
 generateProcedure jit gen (IR.Procedure decls stmts ret) = do
@@ -226,7 +245,7 @@ generateStmt _ _ _ = undefined
 
 generateExpr :: JIT -> Generator -> AST.Expr -> IO (Ptr GccJit.RValue)
 generateExpr jit gen (AST.ConstInt i) = generateInt jit gen i
--- generateExpr jit gen (AST.ConstFloat f) = generateFloat jit gen f
+generateExpr jit gen (AST.ConstFloat f) = generateFloat jit gen f
 generateExpr jit gen (AST.ConstString s) = generateString jit gen s
 generateExpr jit gen (AST.ConstChar c) = generateChar jit gen c
 generateExpr jit gen AST.ConstTrue = generateBool jit gen True
