@@ -104,6 +104,8 @@ struct AT_LIST {
 };
 
 // list functions
+extern at_val_t at_list_from_arr(size_t n, at_val_t* elems);
+
 at_val_t at_list_length(at_list_t* list);
 
 at_list_t* at_list_add(at_list_t* list, at_val_t value); // append single element to the end of a list
@@ -167,10 +169,12 @@ void gc_free(at_garbage_collector_t* gc, void* ptr);
 
 void* gc_make_static(at_garbage_collector_t* gc, void* ptr);
 
-
 #ifndef UNIT_TESTS
     // astatine program entry point
     extern at_val_t Main_main(at_val_t argc, at_val_t argv, at_val_t envp);
+
+    // type size check
+    extern size_t at_type_size_check(void);
 #endif
 
 #endif /* _ASTATINE_RUNTIME_H */

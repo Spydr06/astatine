@@ -18,6 +18,11 @@ char* at_value_to_string(at_val_t value) {
             snprintf(buf, 40, "%g", value.floating);
             return buf;
         }
+        case AT_VAL_CHAR: {
+            char* buf = gc_malloc(&gc, 4 * sizeof(char));
+            snprintf(buf, 4, "'%c'", value.character);
+            return buf;
+        }
 /*        case AT_VAL_FUNC: {
             char* buf = gc_malloc(&gc, 20 * sizeof(char));
             snprintf(buf, 20, "%p", value.pointer);
@@ -55,9 +60,23 @@ at_val_t at_slit(const char* str) {
     at_val_t val = AT_LIST(NULL);
     
     at_list_t** next = &val.list;
-    while(*str++) {
+    while(*str) {
         (*next) = gc_malloc(&gc, sizeof(at_list_t)); 
         (*next)->value = AT_CHAR(*str);
+        next = &(*next)->next;
+        str++;
+    }
+
+    return val;
+}
+
+at_val_t at_list_from_arr(size_t len, at_val_t* elems) {
+    at_val_t val = AT_LIST(NULL);
+
+    at_list_t** next = &val.list;
+    for(size_t i = 0; i < len; i++) {
+        (*next) = gc_malloc(&gc, sizeof(at_list_t));
+        (*next)->value = elems[i];
         next = &(*next)->next;
     }
 
@@ -67,7 +86,7 @@ at_val_t at_slit(const char* str) {
 at_val_t at_call(at_val_t val, at_val_t arg) {
 #ifdef DO_RUNTIME_TYPECHECKS
     if(val.datatype != AT_VAL_FUNC)
-        fprintf(stderr, "at_call: supplied function does not have type AT_VAL_FUNC.\n");
+        panic("at_call: supplied function does not have type AT_VAL_FUNC.");
 #endif
 
     

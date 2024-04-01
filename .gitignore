@@ -15,6 +15,7 @@ vgcore.*
 
 # editor files
 .cache/
+compile_commands.json
 
 # build directories
 dist-newstyle/

@@ -44,12 +44,14 @@ data Context = Context {
     execute :: Bool,
     silent :: Bool,
     verbose :: Bool,
+    
+    driverOpts :: [String],
 
     stdOut :: Handle
 } deriving Show
 
 defaultContext :: Context
-defaultContext = Context "" (InputFile "") (RunInPlace []) defaultRuntimeFile False False False stdout
+defaultContext = Context "" (InputFile "") (RunInPlace []) defaultRuntimeFile False False False ["-rdynamic"] stdout
 
 getContext :: String -> Context
 getContext progName' = defaultContext { progName = progName' }  

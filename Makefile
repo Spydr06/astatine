@@ -25,3 +25,5 @@ runtime-tests:
 clean:
 	cabal clean
 	$(MAKE) -C $(RUNTIME_DIR) clean
+	rm -f $(RUNTIME_TESTS_EXE)
+	rm -f $(RUNTIME_OBJ)

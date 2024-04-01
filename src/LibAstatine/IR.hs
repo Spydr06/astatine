@@ -69,6 +69,7 @@ normalizeExpr mod (AST.CallExpr x xs) = do
             return $ AST.CallExpr x' xs'
 normalizeExpr mod (AST.DoExpr xs) = normalizeDo mod xs
 normalizeExpr mod (AST.IdentExpr k id) = return $ AST.IdentExpr k $ mangleIdent mod k id
+normalizeExpr mod (AST.ListExpr elems) = AST.ListExpr <$> mapM (normalizeExpr mod) elems
 normalizeExpr _ expr | AST.isConst expr = return expr
                      | otherwise = undefined
 

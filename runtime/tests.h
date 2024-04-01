@@ -77,7 +77,30 @@ static int test_list_length(void) {
         if(strcmp(got, test_cases[i].expect) == 0)
             continue;
 
-        fprintf(stderr, "\t\"%s\" did not match expectted \"%s\"\n", got, test_cases[i].expect);
+        fprintf(stderr, "\t\"%s\" did not match expected \"%s\"\n", got, test_cases[i].expect);
+        status = FAIL;
+    }
+
+    gc_end(&gc);
+    return status;
+}
+
+static int test_array_to_list(void) {
+    gc_begin_here(&gc);
+
+    struct { at_val_t* arr; size_t len; const char* expect; } test_cases[] = {
+        {(at_val_t[]){}, 0, "[]"},
+        {(at_val_t[]){AT_NIL}, 1, "[nil]"},
+        {(at_val_t[]){AT_INT(1), AT_INT(2), AT_INT(3)}, 3, "[1, 2, 3]"},
+    };
+
+    int status = PASS;
+    for(size_t i = 0; i < LEN(test_cases); i++) {
+        const char* got = at_value_to_string(at_list_from_arr(test_cases[i].len, test_cases[i].arr));
+        if(strcmp(got, test_cases[i].expect) == 0)
+            continue;
+
+        fprintf(stderr, "\t\"%s\" did not match expected \"%s\"\n", got, test_cases[i].expect);
         status = FAIL;
     }
 
@@ -97,6 +120,7 @@ int main() {
         TESTCASE(test_gc_basic_malloc),
         TESTCASE(test_value_to_string),
         TESTCASE(test_list_length),
+        TESTCASE(test_array_to_list),
         {NULL, NULL}
     };
 #undef TESTCASE
@@ -110,8 +134,10 @@ int main() {
         pid_t pid = fork();
         assert(pid != -1);
 
-        if(pid == 0)
+        if(pid == 0) {
+            install_handlers();
             exit(t->func());
+        }
         
         int status;
         waitpid(pid, &status, 0);

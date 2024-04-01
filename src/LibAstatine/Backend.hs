@@ -29,6 +29,7 @@ type JIT = Ptr GccJit.Context
 data PrimTypes = PrimTypes {
     uInt8 :: Ptr GccJit.Type,
     uInt64 :: Ptr GccJit.Type,
+    sizeT :: Ptr GccJit.Type,
     uChar :: Ptr GccJit.Type,
     double :: Ptr GccJit.Type,
     bool :: Ptr GccJit.Type,
@@ -40,12 +41,13 @@ buildPrimTypes :: JIT -> IO PrimTypes
 buildPrimTypes jit = do
     uInt8 <- GccJit.contextGetType jit GccJit.UInt8
     uInt64 <- GccJit.contextGetType jit GccJit.UInt64
+    sizeT <- GccJit.contextGetType jit GccJit.SizeT
     double <- GccJit.contextGetType jit GccJit.Double
     uChar <- GccJit.contextGetType jit GccJit.UnsignedChar
     bool <- GccJit.contextGetType jit GccJit.Bool
     voidPtr <- GccJit.contextGetType jit GccJit.VoidPtr
     charPtr <- GccJit.contextGetType jit GccJit.Char >>= GccJit.typeGetPointer 
-    return $ PrimTypes uInt8 uInt64 uChar double bool voidPtr charPtr 
+    return $ PrimTypes uInt8 uInt64 sizeT uChar double bool voidPtr charPtr 
 
 data Datatype = ATNil
     | ATInt
@@ -58,7 +60,8 @@ data Datatype = ATNil
 
 builtinIntrns :: PrimTypes -> [(String, [Ptr GccJit.Type])]
 builtinIntrns p = [
-        ("at_slit", [charPtr p])
+        ("at_slit", [charPtr p]),
+        ("at_list_from_arr", [sizeT p, voidPtr p])
     ]
 
 buildBuiltins :: JIT -> Ptr GccJit.Type -> [(String, [Ptr GccJit.Type])] -> IO [(String, Ptr GccJit.Function)]
@@ -73,7 +76,10 @@ data Generator = Generator {
     atStruct :: Ptr GccJit.Struct,
     atData :: Ptr GccJit.Type,
     
-    intrinsics :: [(String, Ptr GccJit.Function)]
+    intrinsics :: [(String, Ptr GccJit.Function)],
+
+    currentFunc :: Maybe (Ptr GccJit.Function),
+    currentBlock :: Maybe (Ptr GccJit.Block)
 }
 
 newGen :: JIT -> IO Generator
@@ -81,7 +87,7 @@ newGen jit = do
         prims <- buildPrimTypes jit
         (atData, at) <- buildATType jit prims
         intrns <- buildBuiltins jit (castPtr at) $ builtinIntrns prims
-        return $ Generator prims (castPtr at) at atData intrns
+        return $ Generator prims (castPtr at) at atData intrns Nothing Nothing
     where buildATType jit prims = do
             unFields <- mapM (\(t, id) -> GccJit.contextNewField jit nullPtr (t prims) id) 
                         [(uInt64, "integer"), (double, "floating"), (bool, "boolean"), (voidPtr, "ptr")]
@@ -117,8 +123,10 @@ generate ctx mod = do
     gen <- newGen jit
 
     mapM_ (generateDecl jit gen) mod  
-
+    mapM_ (GccJit.contextAddDriverOption jit) $ driverOpts ctx
     GccJit.contextAddDriverOption jit $ runtimeFile ctx
+    
+    GccJit.contextDumpToFile jit "dump.out" 1
     case outputFile ctx of
         Executable path -> GccJit.contextCompileToFile jit GccJit.Executable path
         SharedLibrary path -> GccJit.contextCompileToFile jit GccJit.DynamicLibrary path
@@ -172,6 +180,20 @@ generateString jit gen s = do
     sVal <- GccJit.contextNewStringLiteral jit s
     GccJit.contextNewCall jit nullPtr (fromJust $ lookup "at_slit" $ intrinsics gen) [sVal]
 
+generateList :: JIT -> Generator -> [AST.Expr] -> IO (Ptr GccJit.RValue)
+generateList jit gen elems = do
+    let len = length elems
+    arrType <- GccJit.contextNewArrayType jit nullPtr (atType gen) len
+    arr <- GccJit.functionNewLocal (fromJust $ currentFunc gen) nullPtr arrType ""
+    
+    mapM (generateExpr jit gen) elems >>=
+        GccJit.contextNewArrayConstructor jit nullPtr arrType >>=
+        GccJit.blockAddAssignment (fromJust $ currentBlock gen) nullPtr arr . fromJust
+
+    arrVal <- GccJit.lValueGetAddress arr nullPtr
+    lenVal <- GccJit.contextNewRValueFromInt jit (sizeT $ primTypes gen) len
+    GccJit.contextNewCall jit nullPtr (fromJust $ lookup "at_list_from_arr" $ intrinsics gen) [lenVal, arrVal]
+     
 generateChar :: JIT -> Generator -> Char -> IO (Ptr GccJit.RValue)
 generateChar jit gen c = do
     cVal <- GccJit.contextNewRValueFromInt jit (uChar $ primTypes gen) $ fromEnum c
@@ -187,7 +209,7 @@ generateDecl jit gen (IR.Function name params body) = do
     params' <- mapM (GccJit.contextNewParam jit nullPtr $ atType gen) params
     func <- GccJit.contextNewFunction jit nullPtr GccJit.FunctionExported (atType gen) name params' False
     block <- unwrapOrDie (GccJit.functionNewBlock func Nothing) "NULL block"
-    generateProcedure jit gen body >>= GccJit.blockEndWithReturn block nullPtr
+    generateProcedure jit gen { currentFunc = Just func, currentBlock = Just block } body >>= GccJit.blockEndWithReturn block nullPtr
 
 generateDecl _ _ (IR.Global _ _) = undefined
 
@@ -210,6 +232,7 @@ generateExpr jit gen (AST.ConstChar c) = generateChar jit gen c
 generateExpr jit gen AST.ConstTrue = generateBool jit gen True
 generateExpr jit gen AST.ConstFalse = generateBool jit gen False
 generateExpr jit gen AST.ConstNil = generateNil jit gen
+generateExpr jit gen (AST.ListExpr elems) = generateList jit gen elems
 generateExpr _ _ _ = undefined
 
 

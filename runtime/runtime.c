@@ -1,7 +1,6 @@
 #include "runtime.h"
 #include <stdarg.h>
 #include <stdlib.h>
-#include <errno.h>
 
 #ifdef __linux
     #define __USE_XOPEN2K8
@@ -38,7 +37,7 @@ int main(int argc, char** argv, char** envp) {
     at_val_t exit_code = Main_main(AT_INT(argc), AT_NIL, AT_NIL);
 #ifdef DO_RUNTIME_TYPECHECKS
     if(exit_code.datatype != AT_VAL_INT)
-        fprintf(stderr, "Main_main: return type is not of type integer.\n");
+        panic("Main_main: return type is not of type integer, got %s.", at_value_to_string(exit_code));
 #endif
 
     gc_end(&gc);
@@ -54,7 +53,11 @@ void dump_stacktrace(FILE* fp) {
     fflush(fp);
     size_t size = backtrace(stacktrace, LEN(stacktrace));
     
+    if(fp == stderr || fp == stdout)
+        fprintf(fp, "\033[1;38m");
     fprintf(fp, ">> Stack trace:\n");
+    if(fp == stderr || fp == stdout)
+        fprintf(fp, "\033[0m");
     backtrace_symbols_fd(stacktrace, size, fileno(fp));
 
     fflush(fp);
@@ -77,7 +80,7 @@ void NORETURN panic(const char* fmt, ...) {
 
 #ifdef __linux__
 static void NORETURN sighandler(int sig) {
-    panic("received signal %d:\n", strsignal(sig), sig);
+    panic("received signal %d: %s", sig, strsignal(sig));
 }
 #endif
 

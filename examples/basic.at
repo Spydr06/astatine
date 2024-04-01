@@ -2,7 +2,7 @@
 
 -- main function that returns 0
 (defun main (argc argv) (do
-    (IO.puts "Hello, World")
-    0
+    ["a" "b" "c"]
+    [1 2 3]
 ))
 

@@ -2,7 +2,7 @@ SOURCES := $(shell find -name '*.c')
 OBJECTS := $(patsubst %.c, %.o, $(SOURCES))
 
 CFLAGS += -Wall -Wextra -Wno-use-after-free -std=c99 -fPIC -DDO_RUNTIME_TYPECHECKS -c -rdynamic
-LDFLAGS += -relocatable -rdynamic
+LDFLAGS += -relocatable
 
 .PHONY: all
 all: $(RUNTIME)
